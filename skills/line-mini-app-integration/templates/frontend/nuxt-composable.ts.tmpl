@@ -1,0 +1,34 @@
+import { ref, onMounted } from "vue";
+import { initLineMiniApp } from "~/lib/liff-client";
+
+export function useLineMiniApp() {
+  const loading = ref(true);
+  const error = ref<string | null>(null);
+  const isInClient = ref(false);
+
+  onMounted(async () => {
+    try {
+      const boot = await initLineMiniApp(
+        useRuntimeConfig().public.lineLiffId,
+        true,
+      );
+
+      const res = await fetch("/auth/line", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ idToken: boot.idToken }),
+      });
+
+      if (!res.ok) throw new Error("Backend exchange failed");
+
+      isInClient.value = boot.isInClient;
+    } catch (e) {
+      error.value = e instanceof Error ? e.message : "Unknown error";
+    } finally {
+      loading.value = false;
+    }
+  });
+
+  return { loading, error, isInClient };
+}

@@ -1,0 +1,33 @@
+# LINE Developers Console Setup Checklist
+
+## Provider and Channel
+
+- [ ] **Choose the correct provider first.** Do not create under a throwaway or unrelated provider. Channels cannot later be moved to another provider, and LINE user IDs differ across providers.
+- [ ] Create a new channel of type **LINE MINI App** in LINE Developers Console.
+- [ ] Select the service region correctly. If you need multiple regions, create a channel per region.
+
+## Channel Metadata
+
+- [ ] Set channel name, icon, description, email address accurately.
+- [ ] Set privacy policy URL and terms URL.
+- [ ] If development is outsourced or the service provider differs from the developer, include the service company, development company, and actual data recipients in the channel description, and reflect the same relationship in the privacy policy.
+- [ ] In English-only metadata fields, localize channel name/description through multi-language support if the service is user-facing in another language.
+
+## Web App Settings
+
+- [ ] Record all three LIFF IDs: **Developing**, **Review**, **Published**.
+- [ ] Set endpoint URLs per internal channel and deploy the correct build to each endpoint.
+- [ ] Ensure endpoint URLs are HTTPS and do not use URL fragments.
+- [ ] Choose scopes deliberately:
+  - `openid` for ID token retrieval
+  - `profile` for `liff.getProfile()` / `liff.getFriendship()`
+  - `email` when approved and needed
+  - `chat_message.write` for `liff.sendMessages()`
+- [ ] Decide whether channel consent simplification should be enabled and understand its region/state behavior.
+- [ ] Decide whether add-friend behavior is needed. If relying on add-friend prompts with consent simplification, request a scope beyond `openid` or use `liff.requestFriendship()`.
+
+## Testing and Review
+
+- [ ] Enroll testers for the MINI App channel.
+- [ ] Deploy Review-channel code before requesting review.
+- [ ] In Thailand and Taiwan, confirm that the provider is **certified** before planning verified review.

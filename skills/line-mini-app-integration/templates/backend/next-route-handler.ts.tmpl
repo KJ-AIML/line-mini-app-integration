@@ -1,0 +1,51 @@
+import { NextRequest, NextResponse } from "next/server";
+
+export async function POST(req: NextRequest) {
+  const { idToken } = await req.json();
+
+  if (!idToken || typeof idToken !== "string") {
+    return NextResponse.json({ error: "Missing idToken" }, { status: 400 });
+  }
+
+  const clientId = process.env.LINE_CHANNEL_ID;
+  if (!clientId) {
+    return NextResponse.json({ error: "Missing LINE_CHANNEL_ID" }, { status: 500 });
+  }
+
+  const form = new URLSearchParams({
+    id_token: idToken,
+    client_id: clientId,
+  });
+
+  const verifyRes = await fetch("https://api.line.me/oauth2/v2.1/verify", {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: form.toString(),
+    cache: "no-store",
+  });
+
+  if (!verifyRes.ok) {
+    return NextResponse.json({ error: "Invalid LINE ID token" }, { status: 401 });
+  }
+
+  const verified = await verifyRes.json();
+
+  if (verified.iss !== "https://access.line.me" || verified.aud !== clientId) {
+    return NextResponse.json({ error: "Invalid LINE claims" }, { status: 401 });
+  }
+
+  if (verified.exp <= Math.floor(Date.now() / 1000)) {
+    return NextResponse.json({ error: "Expired LINE token" }, { status: 401 });
+  }
+
+  const userId = "user_123"; // replace with your DB lookup/linking logic
+
+  const res = NextResponse.json({ ok: true, userId });
+  res.cookies.set("session", `session-for-${userId}`, {
+    httpOnly: true,
+    secure: true,
+    sameSite: "lax",
+    path: "/",
+  });
+  return res;
+}

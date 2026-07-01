@@ -1,0 +1,57 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { initLineMiniApp } from "@/lib/line/liff-client";
+
+type State =
+  | { kind: "loading" }
+  | { kind: "ready"; isInClient: boolean }
+  | { kind: "error"; message: string };
+
+export default function LineEntryPage() {
+  const [state, setState] = useState<State>({ kind: "loading" });
+
+  useEffect(() => {
+    let canceled = false;
+
+    (async () => {
+      try {
+        const liffId = process.env.NEXT_PUBLIC_LINE_LIFF_ID;
+        if (!liffId) throw new Error("Missing NEXT_PUBLIC_LINE_LIFF_ID");
+
+        const boot = await initLineMiniApp(liffId, true);
+
+        const res = await fetch("/api/auth/line", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({ idToken: boot.idToken }),
+        });
+
+        if (!res.ok) throw new Error("LINE auth exchange failed");
+        if (!canceled) setState({ kind: "ready", isInClient: boot.isInClient });
+      } catch (err) {
+        if (!canceled) {
+          setState({
+            kind: "error",
+            message: err instanceof Error ? err.message : "Unknown error",
+          });
+        }
+      }
+    })();
+
+    return () => {
+      canceled = true;
+    };
+  }, []);
+
+  if (state.kind === "loading") return <p>Opening LINE MINI App…</p>;
+  if (state.kind === "error") return <p>{state.message}</p>;
+
+  return (
+    <main style={{ paddingBottom: 34 }}>
+      <h1>LINE session ready</h1>
+      <p>{state.isInClient ? "Running in LINE" : "Running in external browser"}</p>
+    </main>
+  );
+}

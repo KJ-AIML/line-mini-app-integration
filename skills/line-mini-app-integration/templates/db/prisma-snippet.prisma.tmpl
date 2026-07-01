@@ -1,0 +1,84 @@
+// Add to your schema.prisma
+
+model User {
+  id            String    @id @default(uuid())
+  email         String?   @unique
+  displayName   String?
+  avatarUrl     String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  lineIdentities LineIdentity[]
+  sessions      Session[]
+  auditLogs     AuditLog[]
+  consentLogs   ConsentLog[]
+  serviceMessageLogs ServiceMessageLog[]
+}
+
+model LineIdentity {
+  id                    String   @id @default(uuid())
+  userId                String
+  providerId            String
+  lineSub               String
+  lineChannelId         String
+  pictureUrl            String?
+  lineDisplayName       String?
+  lineEmail             String?
+  rawLastVerifiedClaims Json?
+  lastVerifiedAt        DateTime @default(now())
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([providerId, lineSub])
+  @@unique([lineChannelId, lineSub])
+  @@map("line_identities")
+}
+
+model Session {
+  id               String   @id @default(uuid())
+  userId           String
+  sessionTokenHash String   @unique
+  expiresAt        DateTime
+  createdAt        DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@map("sessions")
+}
+
+model AuditLog {
+  id            String   @id @default(uuid())
+  userId        String?
+  eventType     String
+  eventPayload  Json     @default("{}")
+  createdAt     DateTime @default(now())
+
+  user User? @relation(fields: [userId], references: [id])
+  @@map("audit_logs")
+}
+
+model ConsentLog {
+  id              String   @id @default(uuid())
+  userId          String?
+  consentType     String
+  consentVersion  String?
+  granted         Boolean
+  context         Json     @default("{}")
+  createdAt       DateTime @default(now())
+
+  user User? @relation(fields: [userId], references: [id])
+  @@map("consent_logs")
+}
+
+model ServiceMessageLog {
+  id                  String   @id @default(uuid())
+  userId              String?
+  lineSub             String?
+  messageType         String
+  externalActionRef   String?
+  payload             Json     @default("{}")
+  createdAt           DateTime @default(now())
+
+  user User? @relation(fields: [userId], references: [id])
+  @@map("service_message_logs")
+}

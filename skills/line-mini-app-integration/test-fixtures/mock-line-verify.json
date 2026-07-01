@@ -1,0 +1,39 @@
+{
+  "success": {
+    "iss": "https://access.line.me",
+    "sub": "U1234567890abcdef",
+    "aud": "test-channel-id",
+    "exp": 1893456000,
+    "iat": 1893452400,
+    "nonce": "test-nonce-123",
+    "name": "Test User",
+    "picture": "https://example.com/pic.jpg",
+    "email": "test@example.com"
+  },
+  "expired": {
+    "iss": "https://access.line.me",
+    "sub": "U1234567890abcdef",
+    "aud": "test-channel-id",
+    "exp": 1000000000,
+    "iat": 9999996400,
+    "name": "Test User"
+  },
+  "wrong_issuer": {
+    "iss": "https://evil.com",
+    "sub": "U1234567890abcdef",
+    "aud": "test-channel-id",
+    "exp": 1893456000,
+    "iat": 1893452400
+  },
+  "wrong_audience": {
+    "iss": "https://access.line.me",
+    "sub": "U1234567890abcdef",
+    "aud": "wrong-channel-id",
+    "exp": 1893456000,
+    "iat": 1893452400
+  },
+  "failure_response": {
+    "error": "invalid_request",
+    "error_description": "IdToken expired"
+  }
+}

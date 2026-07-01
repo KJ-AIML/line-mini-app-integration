@@ -1,0 +1,33 @@
+# LINE MINI App Manual QA Checklist
+
+## LIFF Browser Tests
+
+- [ ] Opens from Developing LIFF URL inside LINE
+- [ ] Correct LIFF ID is used for Developing (and Review/Published when testing those)
+- [ ] Auth exchange succeeds and local session is created
+- [ ] No redirect/rewrite occurs before `liff.init()` completes
+- [ ] Bottom actions are visible above safe area (test on both iOS and Android)
+- [ ] Post-LINE 26.7.0 header/dropdown behavior works correctly
+- [ ] Android edge-to-edge rendering (March 2026+) tested
+
+## External Browser Tests
+
+- [ ] App opens from endpoint URL outside LINE
+- [ ] If login is required, external-browser login path works (`withLoginOnExternalBrowser`)
+- [ ] Unsupported LIFF-browser-only features show fallback UI
+- [ ] Open-in-LINE affordance appears where appropriate
+
+## Security Tests
+
+- [ ] Backend rejects forged or blank `idToken`
+- [ ] Backend rejects ID token with wrong `iss`, `aud`, or expired `exp`
+- [ ] Backend creates or links the correct user after valid verification
+- [ ] No `LINE_CHANNEL_SECRET` exposed in frontend bundle
+- [ ] `liff.getProfile()` output is never sent to backend as identity proof
+
+## Review Readiness
+
+- [ ] Review endpoint deploy is accessible
+- [ ] Channel metadata matches actual service behavior
+- [ ] Privacy policy matches data flow
+- [ ] Verified-only features are not assumed in Published before approval

@@ -1,0 +1,63 @@
+-- Add LINE identity linking
+
+create table if not exists users (
+  id uuid primary key default gen_random_uuid(),
+  email text unique,
+  display_name text,
+  avatar_url text,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create table if not exists line_identities (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references users(id) on delete cascade,
+  provider_id text not null, -- LINE provider/channel owner boundary
+  line_sub text not null,    -- from verified ID token "sub"
+  line_channel_id text not null,
+  picture_url text,
+  line_display_name text,
+  line_email text,
+  raw_last_verified_claims jsonb,
+  last_verified_at timestamptz not null default now(),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  unique (provider_id, line_sub),
+  unique (line_channel_id, line_sub)
+);
+
+create table if not exists sessions (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references users(id) on delete cascade,
+  session_token_hash text not null unique,
+  expires_at timestamptz not null,
+  created_at timestamptz not null default now()
+);
+
+create table if not exists audit_logs (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid references users(id),
+  event_type text not null,
+  event_payload jsonb not null default '{}'::jsonb,
+  created_at timestamptz not null default now()
+);
+
+create table if not exists consent_logs (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid references users(id),
+  consent_type text not null,
+  consent_version text,
+  granted boolean not null,
+  context jsonb not null default '{}'::jsonb,
+  created_at timestamptz not null default now()
+);
+
+create table if not exists service_message_logs (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid references users(id),
+  line_sub text,
+  message_type text not null,
+  external_action_ref text,
+  payload jsonb not null default '{}'::jsonb,
+  created_at timestamptz not null default now()
+);

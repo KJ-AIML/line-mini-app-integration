@@ -1,0 +1,64 @@
+import { pgTable, uuid, text, timestamp, jsonb, boolean, uniqueIndex } from "drizzle-orm/pg-core";
+
+export const users = pgTable("users", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  email: text("email").unique(),
+  displayName: text("display_name"),
+  avatarUrl: text("avatar_url"),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
+export const lineIdentities = pgTable("line_identities", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: uuid("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  providerId: text("provider_id").notNull(),
+  lineSub: text("line_sub").notNull(),
+  lineChannelId: text("line_channel_id").notNull(),
+  pictureUrl: text("picture_url"),
+  lineDisplayName: text("line_display_name"),
+  lineEmail: text("line_email"),
+  rawLastVerifiedClaims: jsonb("raw_last_verified_claims"),
+  lastVerifiedAt: timestamp("last_verified_at", { withTimezone: true }).defaultNow().notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+}, (table) => ({
+  providerSubUnique: uniqueIndex("provider_sub_unique").on(table.providerId, table.lineSub),
+  channelSubUnique: uniqueIndex("channel_sub_unique").on(table.lineChannelId, table.lineSub),
+}));
+
+export const sessions = pgTable("sessions", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: uuid("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  sessionTokenHash: text("session_token_hash").notNull().unique(),
+  expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
+export const auditLogs = pgTable("audit_logs", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: uuid("user_id").references(() => users.id),
+  eventType: text("event_type").notNull(),
+  eventPayload: jsonb("event_payload").default({}).notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
+export const consentLogs = pgTable("consent_logs", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: uuid("user_id").references(() => users.id),
+  consentType: text("consent_type").notNull(),
+  consentVersion: text("consent_version"),
+  granted: boolean("granted").notNull(),
+  context: jsonb("context").default({}).notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
+export const serviceMessageLogs = pgTable("service_message_logs", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: uuid("user_id").references(() => users.id),
+  lineSub: text("line_sub"),
+  messageType: text("message_type").notNull(),
+  externalActionRef: text("external_action_ref"),
+  payload: jsonb("payload").default({}).notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+});

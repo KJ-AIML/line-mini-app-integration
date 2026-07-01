@@ -1,0 +1,94 @@
+import type { Request, Response } from "express";
+
+type VerifiedLineIdToken = {
+  iss: string;
+  sub: string;
+  aud: string;
+  exp: number;
+  iat: number;
+  nonce?: string;
+  name?: string;
+  picture?: string;
+  email?: string;
+};
+
+export async function authLineHandler(req: Request, res: Response) {
+  try {
+    const { idToken } = req.body ?? {};
+    if (!idToken || typeof idToken !== "string") {
+      return res.status(400).json({ error: "Missing idToken" });
+    }
+
+    const clientId = process.env.LINE_CHANNEL_ID;
+    if (!clientId) {
+      return res.status(500).json({ error: "Missing LINE_CHANNEL_ID" });
+    }
+
+    const form = new URLSearchParams();
+    form.set("id_token", idToken);
+    form.set("client_id", clientId);
+
+    const verifyRes = await fetch("https://api.line.me/oauth2/v2.1/verify", {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: form.toString(),
+    });
+
+    if (!verifyRes.ok) {
+      return res.status(401).json({ error: "Invalid LINE ID token" });
+    }
+
+    const verified = (await verifyRes.json()) as VerifiedLineIdToken;
+
+    if (verified.iss !== "https://access.line.me") {
+      return res.status(401).json({ error: "Invalid issuer" });
+    }
+
+    if (verified.aud !== clientId) {
+      return res.status(401).json({ error: "Invalid audience" });
+    }
+
+    const now = Math.floor(Date.now() / 1000);
+    if (verified.exp <= now) {
+      return res.status(401).json({ error: "Expired token" });
+    }
+
+    // Optional: compare verified.nonce against your stored expected nonce.
+
+    // Find or create local identity record.
+    const user = await upsertUserFromLine({
+      lineSub: verified.sub,
+      name: verified.name ?? null,
+      pictureUrl: verified.picture ?? null,
+      email: verified.email ?? null,
+    });
+
+    const session = await issueAppSession(user.id);
+
+    res
+      .cookie("session", session.token, {
+        httpOnly: true,
+        sameSite: "lax",
+        secure: true,
+        path: "/",
+      })
+      .json({ ok: true, userId: user.id });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+}
+
+// Example stubs. Replace with real DB/session calls.
+async function upsertUserFromLine(input: {
+  lineSub: string;
+  name: string | null;
+  pictureUrl: string | null;
+  email: string | null;
+}) {
+  return { id: "user_123" };
+}
+
+async function issueAppSession(userId: string) {
+  return { token: `session-for-${userId}` };
+}

@@ -1,0 +1,28 @@
+import { useEffect, useState } from "react";
+import { initLineMiniApp } from "./lib/liff-client";
+
+export default function App() {
+  const [text, setText] = useState("Initializing…");
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const boot = await initLineMiniApp(import.meta.env.VITE_LINE_LIFF_ID, true);
+
+        const res = await fetch("/auth/line", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({ idToken: boot.idToken }),
+        });
+
+        if (!res.ok) throw new Error("Backend exchange failed");
+        setText(boot.isInClient ? "Ready in LINE" : "Ready in browser");
+      } catch (e) {
+        setText(e instanceof Error ? e.message : "Unknown error");
+      }
+    })();
+  }, []);
+
+  return <main style={{ paddingBottom: 34 }}>{text}</main>;
+}

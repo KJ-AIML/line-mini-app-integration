@@ -1,0 +1,31 @@
+import { useEffect, useState } from "react";
+import { initLineMiniApp } from "../lib/line/liff-client";
+
+export default function LineEntry() {
+  const [message, setMessage] = useState("Opening LINE MINI App…");
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const liffId = process.env.NEXT_PUBLIC_LINE_LIFF_ID;
+        if (!liffId) throw new Error("Missing NEXT_PUBLIC_LINE_LIFF_ID");
+
+        const boot = await initLineMiniApp(liffId, true);
+
+        const res = await fetch("/api/auth/line", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({ idToken: boot.idToken }),
+        });
+
+        if (!res.ok) throw new Error("Auth exchange failed");
+        setMessage(boot.isInClient ? "Ready in LINE" : "Ready in external browser");
+      } catch (e) {
+        setMessage(e instanceof Error ? e.message : "Unknown error");
+      }
+    })();
+  }, []);
+
+  return <div style={{ paddingBottom: 34 }}>{message}</div>;
+}

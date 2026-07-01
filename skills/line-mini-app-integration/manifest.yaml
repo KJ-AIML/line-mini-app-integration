@@ -1,0 +1,47 @@
+name: line-mini-app-integration
+description: |
+  Integrate an existing web app with LINE MINI App / LIFF safely.
+  Focuses on LIFF bootstrap, secure token verification, account linking,
+  env/config generation, and review/compliance scaffolding.
+version: 1.0.0
+author: Generated from research
+tags:
+  - line
+  - liff
+  - mini-app
+  - oauth
+  - integration
+  - authentication
+  - web-app
+modes:
+  - audit-existing-app
+  - add-liff-frontend
+  - add-line-auth-backend
+  - create-env-template
+  - create-console-checklist
+  - create-review-checklist
+  - add-tests
+  - generate-docs
+  - full-integration-plan
+inputs:
+  - frontend_stack
+  - backend_stack
+  - auth_strategy
+  - orm_database
+  - route_structure
+  - deploy_environment
+  - existing_account_model
+  - line_region
+  - provider_ownership
+  - liff_ids_per_env
+  - channel_id
+  - account_linking_strategy
+outputs:
+  - frontend_liff_helpers
+  - backend_auth_routes
+  - db_migration_snippets
+  - env_templates
+  - console_setup_docs
+  - review_checklists
+  - qa_checklists
+  - integration_reports

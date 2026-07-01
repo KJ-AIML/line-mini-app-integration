@@ -1,0 +1,35 @@
+import liff from "@line/liff";
+
+export type LineAuthBootstrap = {
+  idToken: string | null;
+  isInClient: boolean;
+  isLoggedIn: boolean;
+};
+
+export async function initLineMiniApp(
+  liffId: string,
+  requireLogin = true,
+): Promise<LineAuthBootstrap> {
+  await liff.init({
+    liffId,
+    withLoginOnExternalBrowser: true,
+  });
+
+  const isInClient = liff.isInClient();
+  const isLoggedIn = liff.isLoggedIn();
+
+  if (requireLogin && !isLoggedIn) {
+    liff.login();
+    throw new Error("Redirecting to LINE Login");
+  }
+
+  return {
+    idToken: liff.getIDToken(),
+    isInClient,
+    isLoggedIn: liff.isLoggedIn(),
+  };
+}
+
+export function canUseLineOnlyFeature(): boolean {
+  return liff.isInClient();
+}

@@ -1,0 +1,25 @@
+# LINE MINI App Environment Variables
+
+# === Public (frontend accessible) ===
+# LIFF ID for the current environment (Developing, Review, or Published)
+# Framework-specific prefix:
+NEXT_PUBLIC_LINE_LIFF_ID=          # For Next.js
+# VITE_LINE_LIFF_ID=                 # For Vite
+# NUXT_PUBLIC_LINE_LIFF_ID=          # For Nuxt
+
+# === Server-side (never expose to frontend) ===
+# LINE Channel ID - used for ID token verification
+LINE_CHANNEL_ID=
+
+# LINE Channel Secret - for some LINE Login flows (HS256 verification)
+# NEVER expose this to the frontend bundle
+LINE_CHANNEL_SECRET=
+
+# === App config ===
+APP_BASE_URL=https://your-app.example.com
+DATABASE_URL=postgresql://user:pass@localhost:5432/dbname
+SESSION_SECRET=your-secure-random-session-secret-min-32-chars
+
+# === Deployment / LINE internal channel mapping ===
+# One of: developing | review | published
+LINE_MINIAPP_MODE=developing

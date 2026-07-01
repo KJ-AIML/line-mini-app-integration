@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LINE MINI App</title>
+    <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+  </head>
+  <body style="padding-bottom: 34px;">
+    <div id="app">Initializing…</div>
+    <script>
+      async function main() {
+        try {
+          await liff.init({
+            liffId: "YOUR_LIFF_ID",
+            withLoginOnExternalBrowser: true
+          });
+
+          if (!liff.isLoggedIn()) {
+            liff.login();
+            return;
+          }
+
+          const res = await fetch("/auth/line", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            credentials: "include",
+            body: JSON.stringify({ idToken: liff.getIDToken() })
+          });
+
+          if (!res.ok) throw new Error("Auth exchange failed");
+          document.getElementById("app").textContent =
+            liff.isInClient() ? "Ready in LINE" : "Ready in browser";
+        } catch (err) {
+          document.getElementById("app").textContent = err.message || "Unknown error";
+        }
+      }
+      main();
+    </script>
+  </body>
+</html>

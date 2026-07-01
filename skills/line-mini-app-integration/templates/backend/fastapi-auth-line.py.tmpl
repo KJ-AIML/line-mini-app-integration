@@ -1,0 +1,73 @@
+import os
+import time
+from typing import Optional
+
+import httpx
+from fastapi import APIRouter, HTTPException, Response
+from pydantic import BaseModel
+
+router = APIRouter()
+
+class AuthLineRequest(BaseModel):
+    idToken: str
+
+class VerifiedLineToken(BaseModel):
+    iss: str
+    sub: str
+    aud: str
+    exp: int
+    iat: int
+    nonce: Optional[str] = None
+    name: Optional[str] = None
+    picture: Optional[str] = None
+    email: Optional[str] = None
+
+@router.post("/auth/line")
+async def auth_line(payload: AuthLineRequest, response: Response):
+    client_id = os.getenv("LINE_CHANNEL_ID")
+    if not client_id:
+        raise HTTPException(status_code=500, detail="Missing LINE_CHANNEL_ID")
+
+    async with httpx.AsyncClient(timeout=10.0) as client:
+        verify_res = await client.post(
+            "https://api.line.me/oauth2/v2.1/verify",
+            data={"id_token": payload.idToken, "client_id": client_id},
+        )
+
+    if verify_res.status_code != 200:
+        raise HTTPException(status_code=401, detail="Invalid LINE ID token")
+
+    verified = VerifiedLineToken.model_validate(verify_res.json())
+
+    if verified.iss != "https://access.line.me":
+        raise HTTPException(status_code=401, detail="Invalid issuer")
+
+    if verified.aud != client_id:
+        raise HTTPException(status_code=401, detail="Invalid audience")
+
+    if verified.exp <= int(time.time()):
+        raise HTTPException(status_code=401, detail="Expired token")
+
+    user = await upsert_user_from_line(
+        line_sub=verified.sub,
+        name=verified.name,
+        picture_url=verified.picture,
+        email=verified.email,
+    )
+    session_token = await issue_app_session(user["id"])
+
+    response.set_cookie(
+        key="session",
+        value=session_token,
+        httponly=True,
+        secure=True,
+        samesite="lax",
+        path="/",
+    )
+    return {"ok": True, "userId": user["id"]}
+
+async def upsert_user_from_line(*, line_sub: str, name: Optional[str], picture_url: Optional[str], email: Optional[str]):
+    return {"id": "user_123"}
+
+async def issue_app_session(user_id: str) -> str:
+    return f"session-for-{user_id}"
